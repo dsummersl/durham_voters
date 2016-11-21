@@ -7,4 +7,4 @@ set -e
 # print command to stdout before executing it:
 set -x
 
-./node_modules/.bin/budo -d src src/app.js -- -t browserify-css -t [ babelify --presets [ es2015 ] ]
+./node_modules/.bin/budo -d src src/app.js --live --open -- -t browserify-css -t [ babelify --presets [ es2015 ] ]
