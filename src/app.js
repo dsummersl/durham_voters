@@ -1,3 +1,5 @@
+require('./app.css')
+
 const extend = require('xtend')
 const choo = require('choo')
 const html = require('choo/html')
@@ -45,4 +47,4 @@ app.router((route) => [
 ])
 
 const tree = app.start()
-document.body.appendChild(tree)
+document.getElementById('map').appendChild(tree)
