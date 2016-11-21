@@ -1,0 +1,19 @@
+{
+  "name": "nc_election_2016",
+  "version": "1.0.0",
+  "description": "Building ========",
+  "main": "index.js",
+  "scripts": {
+    "build": "./build/build.sh",
+    "watch": "./build/watch.sh",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "budo": "^9.2.2",
+    "choo": "^3.3.0",
+    "xtend": "^4.0.1"
+  }
+}

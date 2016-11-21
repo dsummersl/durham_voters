@@ -1,0 +1,11 @@
+{
+  "libs": [
+    "./src/**/*.js"
+  ],
+  "loadEagerly": [ ],
+  "plugins": {
+    "node": {
+      "baseURL": "./"
+    }
+  }
+}
