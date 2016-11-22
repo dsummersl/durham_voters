@@ -14,3 +14,13 @@ html, body, #map {
 #map {
   margin-top: 50px;
 }
+
+.county {
+  fill: #fff;
+  stroke: #777;
+}
+
+svg {
+  stroke: black;
+  stroke-width: 1;
+}
