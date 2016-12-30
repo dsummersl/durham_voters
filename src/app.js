@@ -11,17 +11,24 @@ const app = choo()
 app.model({
   state: {
     names: [ '...loading...' ],
-    csvData: [  ],
+    choiceIndex: 0,
+    csvData: [ ],
+    filteredCsvData: [],
     precincts: null
   },
   effects: {
     loadData: (data, state, send, done) => {
       var loaded = _.after(3, done)
 
-      d3.csv('./president.csv', (rows) => {
-        const names = _.chain(rows).map('Choice').uniq().value()
-        send('recieveNames', names, loaded)
-        send('receiveElectionData', rows, loaded)
+      d3.csv('./president.csv', (d) => {
+        return {
+          Precinct: d.Precinct,
+          County: d.County,
+          Choice: d.Choice,
+          Total_Votes: +d.Total_Votes
+        }
+      }, (rows) => {
+        send('processElectionData', rows, loaded)
       })
       d3.json("./Precincts.topojson", (error, nc) => {
         if (error) return console.log(error)
@@ -29,22 +36,39 @@ app.model({
         const boundaries = topojson.feature(nc, nc.objects.Precincts)
         send('receiveTopoJson', boundaries, loaded)
       })
+    },
+    processElectionData: (csv, state, send, done) => {
+      const names = _.chain(csv).map('Choice').uniq().value()
+      const filtered = _.filter(csv, { 'Choice': names[state.choiceIndex] })
+      send('receiveElectionData', {
+        names: names,
+        csvData: csv,
+        filteredCsvData: filtered,
+      }, done)
+    },
+    selectName: (data, state, send, done) => {
+      send('receiveChoiceIndex', data, (err, res) => {
+        if (err) return console.log(err)
+        send('processElectionData', res.csvData, done)
+      })
     }
   },
   reducers: {
-    receiveElectionData: (electionData, state) => {
+    receiveElectionData: (data, state) => {
       return extend(state, {
-        csvData: extend(electionData)
-      })
-    },
-    recieveNames: (data, state) => {
-      return extend(state, {
-        names: data
+        names: data.names,
+        csvData: data.csvData,
+        filteredCsvData: data.filteredCsvData
       })
     },
     receiveTopoJson: (data, state) => {
       return extend(state, {
         precincts: data
+      })
+    },
+    receiveChoiceIndex: (data, state) => {
+      return extend(state, {
+        choiceIndex: +data.choiceIndex
       })
     }
   }
@@ -75,7 +99,7 @@ const mapElement = (() => {
   // d3.select(window).on('resize', onSizeChange)
 
   return (state) => {
-    if (!state.precincts) {
+    if (!state.precincts || state.filteredCsvData.length == 0) {
       return el
     }
 
@@ -94,10 +118,31 @@ const mapElement = (() => {
     projection.scale(s)
         .translate(t)
 
-    svg.selectAll('path').data(state.precincts.features)
-      .enter().append('path')
+    const maxValue = _.maxBy(state.csvData, 'Total_Votes').Total_Votes
+    const color = d3.scaleLinear()
+      .domain([0, maxValue])
+      .range(["black", "green"])
+
+    const svgBound = svg.selectAll('path').data(state.precincts.features)
+
+    svgBound.enter()
+      .append('path')
         .attr('class', 'county')
         .attr('d', path)
+      .merge(svgBound)
+        .transition()
+        .delay(500)
+        .duration(1000)
+        .style('fill', (d) => {
+          const match = _.filter(state.filteredCsvData, {
+            'Precinct': d.properties.PREC_ID,
+            'County': d.properties.COUNTY_NAM
+          })
+          if (match.length === 0) {
+            return color(0)
+          }
+          return color(match[0].Total_Votes)
+        })
 
     return el
   }
@@ -110,10 +155,12 @@ const view = (state, prev, send) => {
         <nav class="navbar navbar-fixed-top navbar-dark bg-primary">
           <ul class="nav navbar-nav">
             <form class="form-inline float-xs-left">
-              <label for="selectData">Date</label>
-              <select class="form-control" id="selectData">
-                ${state.names.map((name) => html`
-                    <option value="${name}">${name}</option>
+              <label for="selectData">Data</label>
+              <select class="form-control" id="selectData" onchange=${(e) => {
+                send('selectName', { choiceIndex: e.target.value })
+              }}>
+                ${state.names.map((name, index) => html`
+                    <option value="${index}" ${index == state.choiceIndex ? 'selected':''}>${name}</option>
                   `)}
               </select>
             </form>

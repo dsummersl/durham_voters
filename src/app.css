@@ -16,11 +16,7 @@ html, body, #map {
 }
 
 .county {
-  fill: #fff;
-  stroke: #777;
 }
 
 svg {
-  stroke: black;
-  stroke-width: 1;
 }
