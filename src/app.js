@@ -17,7 +17,7 @@ app.model({
     precincts: null
   },
   effects: {
-    loadData: (data, state, send, done) => {
+    loadData: (state, data, send, done) => {
       var loaded = _.after(3, done)
 
       d3.csv('./president.csv', (d) => {
@@ -37,7 +37,7 @@ app.model({
         send('receiveTopoJson', boundaries, loaded)
       })
     },
-    processElectionData: (csv, state, send, done) => {
+    processElectionData: (state, csv, send, done) => {
       const names = _.chain(csv).map('Choice').uniq().value()
       const filtered = _.filter(csv, { 'Choice': names[state.choiceIndex] })
       send('receiveElectionData', {
@@ -46,7 +46,7 @@ app.model({
         filteredCsvData: filtered,
       }, done)
     },
-    selectName: (data, state, send, done) => {
+    selectName: (state, data, send, done) => {
       send('receiveChoiceIndex', data, (err, res) => {
         if (err) return console.log(err)
         send('processElectionData', res.csvData, done)
@@ -54,19 +54,19 @@ app.model({
     }
   },
   reducers: {
-    receiveElectionData: (data, state) => {
+    receiveElectionData: (state, data) => {
       return extend(state, {
         names: data.names,
         csvData: data.csvData,
         filteredCsvData: data.filteredCsvData
       })
     },
-    receiveTopoJson: (data, state) => {
+    receiveTopoJson: (state, data) => {
       return extend(state, {
         precincts: data
       })
     },
-    receiveChoiceIndex: (data, state) => {
+    receiveChoiceIndex: (state, data) => {
       return extend(state, {
         choiceIndex: +data.choiceIndex
       })
@@ -172,9 +172,7 @@ const view = (state, prev, send) => {
     </div>`
 }
 
-app.router((route) => [
-  route('/', view)
-])
+app.router([ '/', view ])
 
 const tree = app.start()
 document.body.appendChild(tree)
