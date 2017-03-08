@@ -1,22 +1,21 @@
 @import 'node_modules/bootstrap/dist/css/bootstrap.min.css';
 
-body {
-  padding: 0;
-  margin: 0;
-  overflow: hidden;
-}
-
-html, body, #map {
+html, body {
   height: 100%;
   width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.map-container {
+  margin-top: 5px;
+  height: 90vh;
 }
 
 .map {
-  margin-top: 50px;
+  flex: 1;
+  height: 90vh;
 }
 
 .county {
-}
-
-svg {
 }
