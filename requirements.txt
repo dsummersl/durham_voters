@@ -1,0 +1,7 @@
+folium==0.3.0
+git+https://github.com/geopandas/geopandas.git#egg=geopandas
+geopy==1.11.0
+jupyter==1.0.0
+matplotlib-venn==0.11.5
+requests==2.13.0
+vincent==0.4.4
