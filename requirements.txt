@@ -1,4 +1,3 @@
-folium==0.3.0
 git+https://github.com/geopandas/geopandas.git#egg=geopandas
 geopy==1.11.0
 jupyter==1.0.0
