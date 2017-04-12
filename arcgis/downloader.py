@@ -17,12 +17,17 @@ def download_arcgis(url, filename):
     one request. To avoid this exceededTransferLimit error, I batch the requests
     in chunks.
     """
-    ids_request = requests.get("{}&returnIdsOnly=true".format(url))
+    count_url = "{}&returnIdsOnly=true".format(url)
+    print(count_url)
+    ids_request = requests.get(count_url)
     ids = ids_request.json()
     id_chunks = [ids['objectIds'][x:x+150] for x in range(0, len(ids['objectIds']), 150)]
 
     first_data = None
+    count = 0
     for chunk in id_chunks:
+        count += 1
+        print('{}/{}'.format(count, len(id_chunks)))
         chunk_url = "{}&objectIds={}".format(url, ','.join(str(c) for c in chunk))
         data_request = requests.get(chunk_url)
         data = data_request.json()
@@ -42,6 +47,15 @@ def download_shp(url, name):
     """
     download_arcgis(url, '{}.json'.format(name))
     data = gpd.GeoDataFrame.from_file('{}.json'.format(name))
-    data.to_file('{}.geojson')
-    data.to_file('{}.shp')
+    data.to_file('{}.geojson'.format(name), 'GeoJSON')
+    data.to_file('{}.shp'.format(name))
     return data
+
+def get_shp(url_template, name, bounds):
+    url = url_template.format(bounds['minx'].min(), bounds['miny'].min(), bounds['maxx'].max(), bounds['maxy'].max())
+
+    SHP = '{}.shp'.format(name)
+    if not os.path.exists(SHP):
+        return download_shp(url, name)
+    else:
+        return gpd.GeoDataFrame.from_file(SHP)
