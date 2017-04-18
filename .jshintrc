@@ -1,7 +1,0 @@
-{
-	"esnext": true,
-  "asi": true,
-	"curly": true,
-	"sub": false,
-	"freeze": true
-}
