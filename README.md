@@ -1,20 +1,31 @@
-Building
+Overview
 ========
 
-This app is intended to be deployed as a static app (no backend).
+This is a set of iPython notebooks that analyze voting data in Durham, NC.
 
-To build:
+ * [County Analysis](./county-visualization.ipynb)
+ * [Precinct Analysis](./precinct-visualization.ipynb)
 
-    npm run build
+Setup
+=====
 
-To run in debug mode:
+1. Install GDAL (ogr2ogr utilities). On OSX this is as easy `brew install gdal`.
+2. Install a virtual environment and dependencies:
 
-    npm run watch
+```bash
 
-Rebuild shapefiles:
+mkvirtualenv nc_election -p `which python3`
+pip install -r requirements.txt
 
-    rm Precincts-simplified*
-    ./node_modules/.bin/mapshaper Precincts.shp -simplify 15% -o Precincts-simplified.shp
-    rm src/Precincts.geojson
-    ogr2ogr -f "GeoJSON" -t_srs crs:84 src/Precincts.geojson Precincts-simplified.shp
-    ./node_modules/topojson-server/bin/geo2topo src/Precincts.geojson > src/Precincts.topojson
+```
+
+3. Run the notebook: `jupyter notebook`
+
+Testing
+=======
+
+I'm slowly building a python library to clean up voter data.
+
+```
+pytest arcgis
+```
