@@ -22,10 +22,11 @@ all_lots['lat'] = all_lots['lat_long'].map(lambda ll: ll.y)
 all_lots['long'] = all_lots['lat_long'].map(lambda ll: ll.x)
 utils.create_address_fields(all_lots, 'SITE_ADDRE')
 
-
 print('Load voters')
 voters = pd.read_csv('data/ncvoter32.txt', sep=None)
 voters_in_county = voters[voters.county_desc == "DURHAM"]
+# cut out 'removed' voters
+voters_in_county = voters[voters.voter_status_desc != "REMOVED"]
 utils.create_address_fields(voters_in_county, 'res_street_address')
 
 print('Create common address column')
@@ -36,8 +37,12 @@ print('Merge')
 merged_lots = all_lots.merge(voters_in_county, on='clean_number_address', how='outer')
 
 print('Save')
+
+# Include both lot and voter address - b/c voters not matched to a lot will have
+# an address that may be useful for finding apartments.
 merged_lots[[
-    'PARCEL_ID', 'voter_reg_num',
-    'clean_address_x', 'lat', 'long', 'first_name', 'middle_name', 'last_name',
+    'PARCEL_ID', 'voter_reg_num', 'clean_number_address',
+    'clean_full_street_x', 'clean_full_street_y',
+    'clean_address_x', 'clean_address_y', 'lat', 'long', 'first_name', 'middle_name', 'last_name',
     'birth_age', 'voter_status_desc', 'party_cd'
 ]].to_csv('durham_parcels.csv', index=False)
