@@ -44,4 +44,4 @@ merged_lots[[
     'clean_full_street_x', 'clean_full_street_y', 'precinct_desc',
     'clean_address_x', 'clean_address_y', 'lat', 'long', 'first_name', 'middle_name', 'last_name',
     'birth_age', 'voter_status_desc', 'party_cd'
-]].to_csv('durham_parcels.csv', index=False)
+]].to_csv('data/durham_parcels.csv', index=False)
