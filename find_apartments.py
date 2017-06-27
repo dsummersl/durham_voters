@@ -31,9 +31,6 @@ for i, row in tqdm(lots.iterrows(), total=lots.shape[0]):
     if len(apartments) == 0:
         continue
     for a in apartments:
-        if a['clean_street_apartment'] == '':
-            # Don't include the 'lot address' if it is not an apartment
-            continue
         in_lots = a['clean_address'] in lots.index
         # Don't add the address if it already exists in our dataset:
         if in_lots:
@@ -55,20 +52,17 @@ for i, row in tqdm(lots.iterrows(), total=lots.shape[0]):
         # voter associated with it:
         new_addresses.append({
             'PARCEL_ID': parcel_id,
-            'voter_reg_num': '',
+            'clean_number_address': row.clean_number_address,
             'clean_full_street_x': row.clean_full_street_x,
             'clean_full_street_y': row.clean_full_street_y,
-            'precinct_desc': row.precinct_desc,
             'clean_address_x': '',
             'clean_address_y': a['clean_address'],
             'lat': row.lat,
             'long': row.long,
-            'first_name': '',
-            'middle_name': '',
-            'last_name': '',
-            'birth_age': '',
-            'voter_status_desc': '',
-            'party_cd': ''
+            'avg_age': 0,
+            'percent_active_voters': 0,
+            'num_voters': 0,
+            'percent_democrat': 0
         })
 
 if len(new_addresses) > 0:
@@ -76,13 +70,10 @@ if len(new_addresses) > 0:
     # print('{}: {} new addresses'.format(address, len(new_addresses)))
 
 lots.PARCEL_ID = lots.PARCEL_ID.fillna(0).astype(int)
-lots.voter_reg_num = pd.to_numeric(lots.voter_reg_num).fillna(0).astype(int)
 lots = lots.fillna('')
 no_lot_address = lots['clean_address_x'].str.contains(r'^$').fillna(False)
 lots['address'] = '' + lots['clean_address_x']
 lots.loc[no_lot_address, 'address'] = '' + lots.loc[no_lot_address, 'clean_address_y']
-
-lots['precinct'] = lots['precinct_desc']
 
 # Manually assign some parcel ids for locations where we know that the city
 # address doesn't match a parcel (parcel data shows one address when it is
@@ -93,8 +84,7 @@ big_apartments = lots.address.str.startswith('3523 N ROXBORO')
 lots.loc[big_apartments, 'PARCEL_ID'] = 128505
 
 lots[[
-    'PARCEL_ID', 'voter_reg_num', 'precinct',
-    'address', 'lat', 'long',
-    'first_name', 'middle_name', 'last_name', 'birth_age',
-    'voter_status_desc', 'party_cd'
+    'PARCEL_ID', 'clean_number_address',
+    'clean_full_street_x', 'clean_full_street_y', 'clean_address_x', 'clean_address_y',
+    'lat', 'long', 'avg_age', 'percent_active_voters', 'num_voters', 'percent_democrat'
 ]].to_csv('data/durham_addresses.csv.gz', compression='gzip', index=False)
