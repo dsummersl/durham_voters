@@ -1,7 +1,6 @@
 from arcgis import downloader, utils
 import geopandas as gpd
 import pandas as pd
-import numpy as np
 
 print('Load shape data')
 durham = gpd.GeoDataFrame.from_file("data/durham.shp")
@@ -18,6 +17,7 @@ all_lots = pd.concat(lots.values())
 # b/c of rectangular arcgis regions and precincts are within those regions,
 # there will be some lots listed twice. Delete dups:
 all_lots = all_lots.drop_duplicates(['PARCEL_ID'])
+print('lots = {}'.format(len(all_lots)))
 
 all_lots['lat_long'] = all_lots.centroid
 all_lots['lat'] = all_lots['lat_long'].map(lambda ll: ll.y)
@@ -34,14 +34,21 @@ utils.create_address_fields(voters_in_county, 'res_street_address')
 print('Create common address column')
 voters_in_county['clean_number_address'] = voters_in_county['clean_street_number'] + ' ' + voters_in_county['clean_full_street']
 all_lots['clean_number_address'] = all_lots['clean_street_number'] + ' ' + all_lots['clean_full_street']
-
-# TODO There are some addresses in the voter dataset that have directionals, but
-# the parcels data set does not. Example (105 E HAMMOND)
+# address without street directional or type at end:
+voters_in_county['clean_number_street'] = voters_in_county['clean_street_number'] + ' ' + voters_in_county['clean_street_name']
+all_lots['clean_number_street'] = all_lots['clean_street_number'] + ' ' + all_lots['clean_street_name']
 
 print('Merge & Gen Stats')
-merged_lots = all_lots.merge(voters_in_county, on='clean_number_address', how='outer')
+by_address = all_lots.merge(voters_in_county, on='clean_number_address', how='inner')
+
+remaining_lots = all_lots[~all_lots.PARCEL_ID.isin(by_address.PARCEL_ID)]
+remaining_voters = voters_in_county[~voters_in_county.voter_reg_num.isin(by_address.voter_reg_num)]
+by_street = remaining_lots.merge(remaining_voters, on='clean_number_street', how='outer')
+
+merged_lots = pd.concat([by_address, by_street])
+
 group_cols = [
-    'PARCEL_ID', 'clean_number_address',
+    'PARCEL_ID', 'LANDUSE_DE', 'clean_number_address',
     'clean_full_street_x', 'clean_full_street_y',
     'clean_address_x', 'clean_address_y']
 grouped = merged_lots[group_cols + [
@@ -63,9 +70,12 @@ aggregations = {
     }
 }
 grouped = grouped.agg(aggregations)
+
 # Drop the first index which is the birth_age, etc that were aggregated into the
 # second index:
 grouped.columns = grouped.columns.droplevel()
+print('exported addresses: {}'.format(len(grouped)))
+# print('exported w/c latlng: {}'.format(len(grouped[grouped[grouped.lat == '']])))
 
 print('Save')
 
