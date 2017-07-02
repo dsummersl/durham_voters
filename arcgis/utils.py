@@ -26,6 +26,12 @@ def memoize(cache_file):
     return wrap
 
 
+@memoize('data/lat_long.pkl')
+def find_lat_long(address):
+    """ Lookup an addresses latitude and longitude """
+    pass
+
+
 @memoize('data/clean_apartments.pkl')
 def find_apartments(address):
     """ Given an address attempt to find apartments for the address.  """
@@ -45,7 +51,7 @@ def find_unique_apartments(address):
 def parse_address(address):
     """ Turn an address into a dictionary of address parts. """
     address = address.strip()
-    matches = re.match(r'^([0-9]+)\S*(\s+(N|W|E|S|SW|SE|NW|NE))?\s+(.+)\s+([a-zA-Z]+)(\s+(\S+))?$', address)
+    matches = re.match(r'^([0-9]+)\S*(\s+(N|W|E|S|SW|SE|NW|NE))?\s+(.+)\s+([a-zA-Z]{2,})(\s+(\S+))?$', address)
     if not matches:
         print('NO Match: {}'.format(address))
         return {

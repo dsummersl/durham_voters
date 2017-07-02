@@ -12,7 +12,8 @@ import pandas as pd
 from tqdm import tqdm
 
 lots = pd.read_csv('data/durham_parcels.csv')
-lots = lots.set_index(['clean_address_y'], drop=False)
+lots_by_voter_address = lots.set_index(['clean_address_y'], drop=False)
+lots_by_parcel_address = lots.set_index(['clean_address_x'], drop=False)
 lots_by_number_address = lots.set_index(['clean_number_address'], drop=False)
 
 searched = []
@@ -30,9 +31,16 @@ for i, row in tqdm(lots.iterrows(), total=lots.shape[0]):
     apartments = utils.find_unique_apartments(address)
     if len(apartments) == 0:
         continue
+    # TODO if apartments exist for the address, remove the non-apartment
+    # rows.
+    if len(apartments) > 1:
+        pass
     for a in apartments:
-        in_lots = a['clean_address'] in lots.index
         # Don't add the address if it already exists in our dataset:
+        in_voter_reg = a['clean_address'] in lots_by_voter_address.index
+        if in_voter_reg:
+            continue
+        in_lots = a['clean_address'] in lots_by_parcel_address.index
         if in_lots:
             continue
 
@@ -44,21 +52,27 @@ for i, row in tqdm(lots.iterrows(), total=lots.shape[0]):
         if len(a['clean_street_directional']) > 0:
             number_address = a['clean_street_number'] + ' ' + a['clean_street_directional'] + ' ' + a['clean_street_name'] + ' ' + a['clean_street_type']
         parcel_id = 0
+        lat = 0
+        lon = 0
+        clean_number_address = ''
         if number_address in lots_by_number_address.index:
             match = lots_by_number_address.loc[[number_address]]
             parcel_id = match.iloc[0].PARCEL_ID
+            lat = match.iloc[0].lat
+            lon = match.iloc[0].long
+            clean_number_address = match.iloc[0].clean_number_address
 
         # Found a new address that doesn't exist in our dataset, with no known
         # voter associated with it:
         new_addresses.append({
             'PARCEL_ID': parcel_id,
-            'clean_number_address': row.clean_number_address,
-            'clean_full_street_x': row.clean_full_street_x,
-            'clean_full_street_y': row.clean_full_street_y,
+            'clean_number_address': clean_number_address,
+            'clean_full_street_x': '',
+            'clean_full_street_y': '',
             'clean_address_x': '',
             'clean_address_y': a['clean_address'],
-            'lat': row.lat,
-            'long': row.long,
+            'lat': lat,
+            'long': lon,
             'avg_age': 0,
             'percent_active_voters': 0,
             'num_voters': 0,
@@ -83,8 +97,8 @@ lots.loc[no_lot_address, 'address'] = '' + lots.loc[no_lot_address, 'clean_addre
 big_apartments = lots.address.str.startswith('3523 N ROXBORO')
 lots.loc[big_apartments, 'PARCEL_ID'] = 128505
 
+lots.rename(columns={'clean_number_address': 'parcel_address', 'clean_address_y': 'clean_address'}, inplace=True)
 lots[[
-    'PARCEL_ID', 'clean_number_address',
-    'clean_full_street_x', 'clean_full_street_y', 'clean_address_x', 'clean_address_y',
+    'PARCEL_ID', 'LANDUSE_DE', 'parcel_address', 'clean_address',
     'lat', 'long', 'avg_age', 'percent_active_voters', 'num_voters', 'percent_democrat'
 ]].to_csv('data/durham_addresses.csv.gz', compression='gzip', index=False)

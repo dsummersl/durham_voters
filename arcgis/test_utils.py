@@ -63,3 +63,12 @@ def test_parse_address():
             'clean_street_apartment': '1A',
             'clean_address': '3146 SW FAYETTEVILLE ST #1A'
         }
+
+    assert parse_address('1008 KINGSWOOD DR F') == {
+            'clean_street_number': '1008',
+            'clean_street_name': 'KINGSWOOD',
+            'clean_street_directional': '',
+            'clean_street_type': 'DR',
+            'clean_street_apartment': 'F',
+            'clean_address': '1008 KINGSWOOD DR #F'
+        }
